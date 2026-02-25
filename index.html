@@ -82,9 +82,9 @@
   <style>@view-transition { navigation: auto; }</style>
  </head>
  <body class="h-full">
-  <audio id="soundOpening" src="opening.mp3"></audio>
-  <audio id="soundReward" src="reward.mp3"></audio>
-  <audio id="soundGameOver" src="game_over.mp3"></audio>
+  <audio id="soundOpening" src="opening.mp3" preload="auto"></audio>
+  <audio id="soundReward" src="reward.mp3" preload="auto"></audio>
+  <audio id="soundGameOver" src="game_over.mp3" preload="auto"></audio>
   <div id="app" class="w-full h-full overflow-auto"></div>
   <script>
     const defaultConfig = {
@@ -437,7 +437,7 @@
         setTimeout(checkMatch, 800);
       }
     }
-
+   
     function checkMatch() {
       const [first, second] = gameState.flippedCards;
       const card1 = gameState.cards[first];
@@ -482,6 +482,30 @@
       return messages[stars] || "Good!";
     }
 
+    function playOpening() {
+      const audio = document.getElementById("soundOpening");
+      if (audio) {
+          audio.currentTime = 0;
+          audio.play();
+    }
+   }
+
+    function playReward() {
+      const audio = document.getElementById("soundReward");
+      if (audio) {
+      audio.currentTime = 0;
+      audio.play();
+    }
+   }
+
+    function playGameOver() {
+     const audio = document.getElementById("soundGameOver");
+      if (audio) {
+      audio.currentTime = 0;
+      audio.play();
+     }
+    }
+   
     function showLevelComplete() {
       playReward(); // 🔊 suara menang
      
@@ -590,6 +614,7 @@
     }
 
     function renderGame() {
+      playOpening(); // 🔊 suara mulai
       initializeLevel(gameState.currentLevel);
       
       const bgIndex = (gameState.currentLevel - 1) % backgrounds.length;
@@ -1158,5 +1183,6 @@
  <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9ce17c32d09289be',t:'MTc3MTEyMzY5NC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 
 </html>
+
 
 
