@@ -81,10 +81,10 @@
   </style>
   <style>@view-transition { navigation: auto; }</style>
  </head>
- <audio id="soundOpening" src="opening.mp3.mp3"></audio>
-<audio id="soundReward" src="reward.mp3.mp3"></audio>
-<audio id="soundGameOver" src="game over.mp3.mp3"></audio>
  <body class="h-full">
+  <audio id="soundOpening" src="opening.mp3"></audio>
+  <audio id="soundReward" src="reward.mp3"></audio>
+  <audio id="soundGameOver" src="game_over.mp3"></audio>
   <div id="app" class="w-full h-full overflow-auto"></div>
   <script>
     const defaultConfig = {
@@ -99,18 +99,7 @@
       guide_name: "Puzzing",
       start_button: "Mulai Bermain"
     };
-// ===== SOUND SYSTEM =====
-function playOpening() {
-  document.getElementById("soundOpening").play();
-}
 
-function playReward() {
-  document.getElementById("soundReward").play();
-}
-
-function playGameOver() {
-  document.getElementById("soundGameOver").play();
-}
     let config = { ...defaultConfig };
 
     const animals = [
@@ -416,7 +405,6 @@ function playGameOver() {
           showTimeUpModal();
           playGameOver(); // 🔊 suara kalah
          gameState.isPlaying = false;
-  ...
         }
       }, 1000);
     }
@@ -1170,4 +1158,5 @@ function playGameOver() {
  <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9ce17c32d09289be',t:'MTc3MTEyMzY5NC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 
 </html>
+
 
