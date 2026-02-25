@@ -81,6 +81,9 @@
   </style>
   <style>@view-transition { navigation: auto; }</style>
  </head>
+ <audio id="soundOpening" src="opening.mp3.mp3"></audio>
+<audio id="soundReward" src="reward.mp3.mp3"></audio>
+<audio id="soundGameOver" src="game over.mp3.mp3"></audio>
  <body class="h-full">
   <div id="app" class="w-full h-full overflow-auto"></div>
   <script>
@@ -96,7 +99,18 @@
       guide_name: "Puzzing",
       start_button: "Mulai Bermain"
     };
+// ===== SOUND SYSTEM =====
+function playOpening() {
+  document.getElementById("soundOpening").play();
+}
 
+function playReward() {
+  document.getElementById("soundReward").play();
+}
+
+function playGameOver() {
+  document.getElementById("soundGameOver").play();
+}
     let config = { ...defaultConfig };
 
     const animals = [
@@ -400,6 +414,9 @@
         if (gameState.timeLeft <= 0) {
           clearInterval(gameState.timer);
           showTimeUpModal();
+          playGameOver(); // 🔊 suara kalah
+         gameState.isPlaying = false;
+  ...
         }
       }, 1000);
     }
@@ -478,6 +495,8 @@
     }
 
     function showLevelComplete() {
+      playReward(); // 🔊 suara menang
+     
       const stars = getStarRating();
       const message = getEncouragementMessage(stars);
       
@@ -1053,7 +1072,8 @@
       `;
       
       document.getElementById('backBtn').addEventListener('click', () => {
-        renderStartScreen();
+       playOpening();   // 🔊 TAMBAHAN
+       renderStartScreen();
       });
       document.getElementById('startFromInstructionBtn').addEventListener('click', () => {
         setTimeout(renderGame, 200);
@@ -1150,3 +1170,4 @@
  <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9ce17c32d09289be',t:'MTc3MTEyMzY5NC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 
 </html>
+
