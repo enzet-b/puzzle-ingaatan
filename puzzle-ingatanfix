@@ -1,0 +1,1186 @@
+<!doctype html>
+<html lang="id" class="h-full">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Puzzle Ingatan</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      box-sizing: border-box;
+    }
+    
+    @keyframes flip {
+      0% { transform: rotateY(0deg); }
+      100% { transform: rotateY(180deg); }
+    }
+    
+    @keyframes flipBack {
+      0% { transform: rotateY(180deg); }
+      100% { transform: rotateY(0deg); }
+    }
+    
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
+    }
+    
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; transform: scale(0.8); }
+      to { opacity: 1; transform: scale(1); }
+    }
+    
+    @keyframes starPop {
+      0% { transform: scale(0) rotate(0deg); }
+      50% { transform: scale(1.2) rotate(180deg); }
+      100% { transform: scale(1) rotate(360deg); }
+    }
+    
+    @keyframes float {
+      0%, 100% { transform: translateY(0) rotate(0deg); }
+      50% { transform: translateY(-15px) rotate(5deg); }
+    }
+    
+    .card-flip {
+      animation: flip 0.4s ease-in-out;
+    }
+    
+    .card-flip-back {
+      animation: flipBack 0.4s ease-in-out;
+    }
+    
+    .bounce-animation {
+      animation: bounce 0.5s ease-in-out;
+    }
+    
+    .pulse-animation {
+      animation: pulse 0.8s ease-in-out infinite;
+    }
+    
+    .fade-in {
+      animation: fadeIn 0.5s ease-out;
+    }
+    
+    .star-pop {
+      animation: starPop 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    }
+    
+    .float-animation {
+      animation: float 3s ease-in-out infinite;
+    }
+    
+    .card-3d {
+      perspective: 1000px;
+      transform-style: preserve-3d;
+    }
+  </style>
+  <style>@view-transition { navigation: auto; }</style>
+ </head>
+ <body class="h-full">
+  <audio id="soundOpening" src="opening.mp3" preload="auto"></audio>
+  <audio id="soundReward" src="reward.mp3" preload="auto"></audio>
+  <audio id="soundGameOver" src="game_over.mp3" preload="auto"></audio>
+  <div id="app" class="w-full h-full overflow-auto"></div>
+  <script>
+    const defaultConfig = {
+      background_color: "#FFF8E7",
+      card_back_color: "#FFD54F",
+      primary_button_color: "#FF6B9D",
+      text_color: "#5D4037",
+      accent_color: "#4FC3F7",
+      font_family: "Comic Sans MS",
+      font_size: 16,
+      game_title: "Puzzle Ingatan",
+      guide_name: "Puzzing",
+      start_button: "Mulai Bermain"
+    };
+
+    let config = { ...defaultConfig };
+
+    const animals = [
+      { 
+        name: "Anjing",
+        svg: `<svg viewBox="0 0 200 200" style="width: 100%; height: 100%;">
+          <ellipse cx="100" cy="120" rx="45" ry="38" fill="#D4A574"/>
+          <circle cx="100" cy="75" r="38" fill="#D4A574"/>
+          <ellipse cx="70" cy="50" rx="15" ry="28" fill="#B8906A" transform="rotate(-25 70 50)"/>
+          <ellipse cx="130" cy="50" rx="15" ry="28" fill="#B8906A" transform="rotate(25 130 50)"/>
+          <circle cx="85" cy="70" r="6" fill="#3E2723"/>
+          <circle cx="115" cy="70" r="6" fill="#3E2723"/>
+          <ellipse cx="100" cy="85" rx="8" ry="6" fill="#3E2723"/>
+          <path d="M 100 88 Q 92 95 85 92 M 100 88 Q 108 95 115 92" stroke="#3E2723" stroke-width="3" fill="none" stroke-linecap="round"/>
+          <rect x="75" y="150" width="12" height="35" rx="6" fill="#D4A574"/>
+          <ellipse cx="81" cy="185" rx="8" ry="5" fill="#B8906A"/>
+          <rect x="113" y="150" width="12" height="35" rx="6" fill="#D4A574"/>
+          <ellipse cx="119" cy="185" rx="8" ry="5" fill="#B8906A"/>
+          <path d="M 140 110 Q 155 105 165 120" stroke="#D4A574" stroke-width="10" fill="none" stroke-linecap="round"/>
+        </svg>`
+      },
+      { 
+        name: "Kucing",
+        svg: `<svg viewBox="0 0 200 200" style="width: 100%; height: 100%;">
+          <ellipse cx="100" cy="125" rx="40" ry="32" fill="#FF8A65"/>
+          <circle cx="100" cy="80" r="35" fill="#FF8A65"/>
+          <polygon points="75,45 65,60 85,60" fill="#FF8A65"/>
+          <polygon points="125,45 115,60 135,60" fill="#FF8A65"/>
+          <polygon points="75,50 70,58 80,58" fill="#FFB3A7"/>
+          <polygon points="125,50 120,58 130,58" fill="#FFB3A7"/>
+          <ellipse cx="88" cy="78" rx="6" ry="8" fill="#FFF"/>
+          <ellipse cx="88" cy="80" rx="3" ry="6" fill="#212121"/>
+          <ellipse cx="112" cy="78" rx="6" ry="8" fill="#FFF"/>
+          <ellipse cx="112" cy="80" rx="3" ry="6" fill="#212121"/>
+          <polygon points="100,88 96,93 104,93" fill="#212121"/>
+          <path d="M 100 93 L 100 98 M 100 98 Q 94 102 88 99 M 100 98 Q 106 102 112 99" stroke="#212121" stroke-width="2" fill="none" stroke-linecap="round"/>
+          <line x1="65" y1="82" x2="45" y2="78" stroke="#212121" stroke-width="1.5"/>
+          <line x1="65" y1="87" x2="45" y2="87" stroke="#212121" stroke-width="1.5"/>
+          <line x1="135" y1="82" x2="155" y2="78" stroke="#212121" stroke-width="1.5"/>
+          <line x1="135" y1="87" x2="155" y2="87" stroke="#212121" stroke-width="1.5"/>
+          <rect x="82" y="152" width="12" height="30" rx="6" fill="#FF8A65"/>
+          <rect x="106" y="152" width="12" height="30" rx="6" fill="#FF8A65"/>
+          <path d="M 138 118 Q 155 110 162 95" stroke="#FF8A65" stroke-width="9" fill="none" stroke-linecap="round"/>
+        </svg>`
+      },
+      { 
+        name: "Tikus",
+        svg: `<svg viewBox="0 0 200 200" style="width: 100%; height: 100%;">
+          <ellipse cx="100" cy="120" rx="35" ry="30" fill="#9E9E9E"/>
+          <circle cx="100" cy="85" r="28" fill="#9E9E9E"/>
+          <circle cx="70" cy="75" r="18" fill="#757575" opacity="0.6"/>
+          <ellipse cx="70" cy="75" rx="12" ry="16" fill="#BDBDBD"/>
+          <circle cx="130" cy="75" r="18" fill="#757575" opacity="0.6"/>
+          <ellipse cx="130" cy="75" rx="12" ry="16" fill="#BDBDBD"/>
+          <circle cx="92" cy="82" r="4" fill="#212121"/>
+          <circle cx="108" cy="82" r="4" fill="#212121"/>
+          <ellipse cx="100" cy="92" rx="5" ry="4" fill="#EF5350"/>
+          <line x1="70" y1="92" x2="45" y2="88" stroke="#616161" stroke-width="1.5"/>
+          <line x1="70" y1="96" x2="45" y2="96" stroke="#616161" stroke-width="1.5"/>
+          <line x1="70" y1="100" x2="45" y2="104" stroke="#616161" stroke-width="1.5"/>
+          <line x1="130" y1="92" x2="155" y2="88" stroke="#616161" stroke-width="1.5"/>
+          <line x1="130" y1="96" x2="155" y2="96" stroke="#616161" stroke-width="1.5"/>
+          <line x1="130" y1="100" x2="155" y2="104" stroke="#616161" stroke-width="1.5"/>
+          <rect x="85" y="145" width="10" height="25" rx="5" fill="#9E9E9E"/>
+          <rect x="105" y="145" width="10" height="25" rx="5" fill="#9E9E9E"/>
+          <path d="M 65 125 Q 45 130 35 145" stroke="#9E9E9E" stroke-width="6" fill="none" stroke-linecap="round"/>
+        </svg>`
+      },
+      { 
+        name: "Kelinci",
+        svg: `<svg viewBox="0 0 200 200" style="width: 100%; height: 100%;">
+          <ellipse cx="100" cy="130" rx="38" ry="32" fill="#E1BEE7"/>
+          <circle cx="100" cy="90" r="32" fill="#E1BEE7"/>
+          <ellipse cx="85" cy="45" rx="10" ry="35" fill="#E1BEE7" transform="rotate(-12 85 45)"/>
+          <ellipse cx="85" cy="45" rx="6" ry="28" fill="#F3E5F5" transform="rotate(-12 85 45)"/>
+          <ellipse cx="115" cy="45" rx="10" ry="35" fill="#E1BEE7" transform="rotate(12 115 45)"/>
+          <ellipse cx="115" cy="45" rx="6" ry="28" fill="#F3E5F5" transform="rotate(12 115 45)"/>
+          <circle cx="90" cy="88" r="5" fill="#4A148C"/>
+          <circle cx="110" cy="88" r="5" fill="#4A148C"/>
+          <ellipse cx="100" cy="100" rx="4" ry="3" fill="#EC407A"/>
+          <path d="M 100 102 L 100 108 M 97 108 Q 100 112 103 108" stroke="#4A148C" stroke-width="2" fill="none" stroke-linecap="round"/>
+          <circle cx="82" cy="95" r="6" fill="#F8BBD0" opacity="0.7"/>
+          <circle cx="118" cy="95" r="6" fill="#F8BBD0" opacity="0.7"/>
+          <rect x="85" y="158" width="11" height="25" rx="5" fill="#E1BEE7"/>
+          <rect x="104" y="158" width="11" height="25" rx="5" fill="#E1BEE7"/>
+          <ellipse cx="72" cy="165" rx="12" ry="16" fill="#E1BEE7"/>
+          <ellipse cx="72" cy="170" rx="10" ry="9" fill="#CE93D8"/>
+          <ellipse cx="128" cy="165" rx="12" ry="16" fill="#E1BEE7"/>
+          <ellipse cx="128" cy="170" rx="10" ry="9" fill="#CE93D8"/>
+          <circle cx="100" cy="158" r="10" fill="#F3E5F5"/>
+        </svg>`
+      },
+      { 
+        name: "Rubah",
+        svg: `<svg viewBox="0 0 200 200" style="width: 100%; height: 100%;">
+          <ellipse cx="100" cy="125" rx="42" ry="35" fill="#FF6F00"/>
+          <ellipse cx="100" cy="130" rx="30" ry="25" fill="#FFF3E0"/>
+          <circle cx="100" cy="80" r="36" fill="#FF6F00"/>
+          <ellipse cx="100" cy="88" rx="22" ry="18" fill="#FFF3E0"/>
+          <polygon points="75,48 68,70 82,65" fill="#FF6F00"/>
+          <polygon points="75,50 70,65 80,62" fill="#1A1A1A"/>
+          <polygon points="125,48 118,65 132,70" fill="#FF6F00"/>
+          <polygon points="125,50 120,62 130,65" fill="#1A1A1A"/>
+          <circle cx="88" cy="78" r="5" fill="#1A1A1A"/>
+          <circle cx="112" cy="78" r="5" fill="#1A1A1A"/>
+          <ellipse cx="100" cy="92" rx="6" ry="5" fill="#1A1A1A"/>
+          <path d="M 100 95 Q 94 100 88 97 M 100 95 Q 106 100 112 97" stroke="#1A1A1A" stroke-width="2" fill="none" stroke-linecap="round"/>
+          <rect x="80" y="155" width="13" height="30" rx="6" fill="#FF6F00"/>
+          <ellipse cx="86.5" cy="185" rx="8" ry="5" fill="#1A1A1A"/>
+          <rect x="107" y="155" width="13" height="30" rx="6" fill="#FF6F00"/>
+          <ellipse cx="113.5" cy="185" rx="8" ry="5" fill="#1A1A1A"/>
+          <path d="M 65 130 Q 45 140 35 165 Q 32 175 38 180 Q 50 178 55 170 L 60 155" fill="#FF6F00" stroke="#E65100" stroke-width="2"/>
+          <path d="M 40 165 Q 38 172 42 175" fill="#FFF3E0"/>
+        </svg>`
+      },
+      { 
+        name: "Beruang",
+        svg: `<svg viewBox="0 0 200 200" style="width: 100%; height: 100%;">
+          <ellipse cx="100" cy="130" rx="48" ry="40" fill="#6D4C41"/>
+          <ellipse cx="100" cy="135" rx="35" ry="30" fill="#8D6E63"/>
+          <circle cx="100" cy="75" r="38" fill="#6D4C41"/>
+          <ellipse cx="100" cy="88" rx="24" ry="20" fill="#8D6E63"/>
+          <circle cx="68" cy="55" r="16" fill="#6D4C41"/>
+          <circle cx="68" cy="58" r="10" fill="#5D4037"/>
+          <circle cx="132" cy="55" r="16" fill="#6D4C41"/>
+          <circle cx="132" cy="58" r="10" fill="#5D4037"/>
+          <circle cx="88" cy="70" r="6" fill="#1A1A1A"/>
+          <circle cx="112" cy="70" r="6" fill="#1A1A1A"/>
+          <ellipse cx="100" cy="90" rx="8" ry="6" fill="#1A1A1A"/>
+          <path d="M 100 94 Q 94 100 88 96 M 100 94 Q 106 100 112 96" stroke="#1A1A1A" stroke-width="3" fill="none" stroke-linecap="round"/>
+          <rect x="72" y="165" width="16" height="28" rx="8" fill="#6D4C41"/>
+          <ellipse cx="80" cy="193" rx="10" ry="6" fill="#5D4037"/>
+          <rect x="112" y="165" width="16" height="28" rx="8" fill="#6D4C41"/>
+          <ellipse cx="120" cy="193" rx="10" ry="6" fill="#5D4037"/>
+        </svg>`
+      },
+      { 
+        name: "Panda",
+        svg: `<svg viewBox="0 0 200 200" style="width: 100%; height: 100%;">
+          <ellipse cx="100" cy="130" rx="45" ry="38" fill="#FAFAFA"/>
+          <ellipse cx="100" cy="135" rx="32" ry="28" fill="#F5F5F5"/>
+          <circle cx="100" cy="75" r="36" fill="#FAFAFA"/>
+          <circle cx="70" cy="60" r="18" fill="#1A1A1A"/>
+          <circle cx="130" cy="60" r="18" fill="#1A1A1A"/>
+          <ellipse cx="80" cy="72" rx="16" ry="20" fill="#1A1A1A" transform="rotate(-10 80 72)"/>
+          <circle cx="82" cy="72" r="5" fill="#FAFAFA"/>
+          <ellipse cx="120" cy="72" rx="16" ry="20" fill="#1A1A1A" transform="rotate(10 120 72)"/>
+          <circle cx="118" cy="72" r="5" fill="#FAFAFA"/>
+          <ellipse cx="100" cy="88" rx="7" ry="6" fill="#1A1A1A"/>
+          <path d="M 100 92 Q 94 98 88 95 M 100 92 Q 106 98 112 95" stroke="#1A1A1A" stroke-width="3" fill="none" stroke-linecap="round"/>
+          <rect x="75" y="165" width="15" height="28" rx="7" fill="#1A1A1A"/>
+          <ellipse cx="82.5" cy="193" rx="9" ry="5" fill="#1A1A1A"/>
+          <rect x="110" y="165" width="15" height="28" rx="7" fill="#1A1A1A"/>
+          <ellipse cx="117.5" cy="193" rx="9" ry="5" fill="#1A1A1A"/>
+        </svg>`
+      },
+      { 
+        name: "Koala",
+        svg: `<svg viewBox="0 0 200 200" style="width: 100%; height: 100%;">
+          <ellipse cx="100" cy="125" rx="40" ry="35" fill="#90A4AE"/>
+          <ellipse cx="100" cy="130" rx="28" ry="25" fill="#CFD8DC"/>
+          <circle cx="100" cy="80" r="35" fill="#90A4AE"/>
+          <ellipse cx="100" cy="90" rx="20" ry="16" fill="#CFD8DC"/>
+          <circle cx="65" cy="70" r="20" fill="#78909C"/>
+          <ellipse cx="65" cy="72" rx="14" ry="16" fill="#B0BEC5"/>
+          <circle cx="135" cy="70" r="20" fill="#78909C"/>
+          <ellipse cx="135" cy="72" rx="14" ry="16" fill="#B0BEC5"/>
+          <circle cx="88" cy="78" r="5" fill="#1A1A1A"/>
+          <circle cx="112" cy="78" r="5" fill="#1A1A1A"/>
+          <ellipse cx="100" cy="95" rx="10" ry="8" fill="#455A64"/>
+          <rect x="80" y="155" width="14" height="30" rx="7" fill="#90A4AE"/>
+          <ellipse cx="87" cy="185" rx="9" ry="5" fill="#78909C"/>
+          <rect x="106" y="155" width="14" height="30" rx="7" fill="#90A4AE"/>
+          <ellipse cx="113" cy="185" rx="9" ry="5" fill="#78909C"/>
+        </svg>`
+      },
+      { 
+        name: "Harimau",
+        svg: `<svg viewBox="0 0 200 200" style="width: 100%; height: 100%;">
+          <ellipse cx="100" cy="125" rx="46" ry="38" fill="#FF9800"/>
+          <rect x="65" y="110" width="8" height="30" fill="#1A1A1A" opacity="0.6"/>
+          <rect x="85" y="110" width="8" height="30" fill="#1A1A1A" opacity="0.6"/>
+          <rect x="107" y="110" width="8" height="30" fill="#1A1A1A" opacity="0.6"/>
+          <rect x="127" y="110" width="8" height="30" fill="#1A1A1A" opacity="0.6"/>
+          <circle cx="100" cy="75" r="37" fill="#FF9800"/>
+          <rect x="70" y="60" width="7" height="25" fill="#1A1A1A" opacity="0.6" transform="rotate(-20 73.5 72.5)"/>
+          <rect x="123" y="60" width="7" height="25" fill="#1A1A1A" opacity="0.6" transform="rotate(20 126.5 72.5)"/>
+          <polygon points="78,48 70,65 86,62" fill="#FF9800"/>
+          <polygon points="122,48 114,62 130,65" fill="#FF9800"/>
+          <circle cx="88" cy="72" r="6" fill="#FFD54F"/>
+          <circle cx="88" cy="72" r="4" fill="#1A1A1A"/>
+          <circle cx="112" cy="72" r="6" fill="#FFD54F"/>
+          <circle cx="112" cy="72" r="4" fill="#1A1A1A"/>
+          <ellipse cx="100" cy="86" rx="7" ry="5" fill="#1A1A1A"/>
+          <path d="M 100 89 Q 93 95 86 91 M 100 89 Q 107 95 114 91" stroke="#1A1A1A" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+          <line x1="70" y1="85" x2="50" y2="82" stroke="#1A1A1A" stroke-width="2"/>
+          <line x1="70" y1="90" x2="50" y2="90" stroke="#1A1A1A" stroke-width="2"/>
+          <line x1="130" y1="85" x2="150" y2="82" stroke="#1A1A1A" stroke-width="2"/>
+          <line x1="130" y1="90" x2="150" y2="90" stroke="#1A1A1A" stroke-width="2"/>
+          <rect x="78" y="158" width="14" height="32" rx="7" fill="#FF9800"/>
+          <ellipse cx="85" cy="190" rx="9" ry="5" fill="#F57C00"/>
+          <rect x="108" y="158" width="14" height="32" rx="7" fill="#FF9800"/>
+          <ellipse cx="115" cy="190" rx="9" ry="5" fill="#F57C00"/>
+          <path d="M 140 120 Q 158 115 170 125" stroke="#FF9800" stroke-width="11" fill="none" stroke-linecap="round"/>
+          <rect x="155" y="115" width="6" height="15" fill="#1A1A1A" opacity="0.6" transform="rotate(25 158 122.5)"/>
+        </svg>`
+      },
+      { 
+        name: "Singa",
+        svg: `<svg viewBox="0 0 200 200" style="width: 100%; height: 100%;">
+          <ellipse cx="100" cy="130" rx="44" ry="36" fill="#FFCA28"/>
+          <circle cx="100" cy="75" r="35" fill="#FFCA28"/>
+          <circle cx="100" cy="75" r="50" fill="#FF8F00" opacity="0.3"/>
+          <path d="M 55 50 Q 45 40 42 52 Q 40 42 35 48 Q 30 40 28 50" fill="#FF6F00"/>
+          <path d="M 50 75 Q 38 75 35 82 Q 32 75 28 78 Q 25 72 23 80" fill="#FF6F00"/>
+          <path d="M 55 95 Q 45 100 43 108 Q 38 102 35 108" fill="#FF6F00"/>
+          <path d="M 145 50 Q 155 40 158 52 Q 160 42 165 48 Q 170 40 172 50" fill="#FF6F00"/>
+          <path d="M 150 75 Q 162 75 165 82 Q 168 75 172 78 Q 175 72 177 80" fill="#FF6F00"/>
+          <path d="M 145 95 Q 155 100 157 108 Q 162 102 165 108" fill="#FF6F00"/>
+          <path d="M 75 35 Q 68 28 65 38 Q 62 30 58 35" fill="#FF6F00"/>
+          <path d="M 125 35 Q 132 28 135 38 Q 138 30 142 35" fill="#FF6F00"/>
+          <path d="M 100 25 Q 95 20 92 28 Q 100 18 108 28 Q 105 20 100 25" fill="#FF6F00"/>
+          <polygon points="82,55 75,68 89,65" fill="#FFCA28"/>
+          <polygon points="118,55 111,65 125,68" fill="#FFCA28"/>
+          <circle cx="88" cy="72" r="6" fill="#3E2723"/>
+          <circle cx="112" cy="72" r="6" fill="#3E2723"/>
+          <ellipse cx="100" cy="86" rx="8" ry="6" fill="#3E2723"/>
+          <path d="M 100 90 Q 93 96 86 92 M 100 90 Q 107 96 114 92" stroke="#3E2723" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+          <rect x="76" y="160" width="15" height="32" rx="7" fill="#FFCA28"/>
+          <ellipse cx="83.5" cy="192" rx="9" ry="5" fill="#FFA000"/>
+          <rect x="109" y="160" width="15" height="32" rx="7" fill="#FFCA28"/>
+          <ellipse cx="116.5" cy="192" rx="9" ry="5" fill="#FFA000"/>
+          <path d="M 138 125 Q 155 120 168 132 L 175 140 Q 172 145 165 142 L 150 135" fill="#FFCA28" stroke="#FF8F00" stroke-width="2"/>
+        </svg>`
+      }
+    ];
+
+    const backgrounds = [
+      "linear-gradient(135deg, #FFF9E6 0%, #FFE4B5 100%)",
+      "linear-gradient(135deg, #E8F5E9 0%, #C8E6C9 100%)",
+      "linear-gradient(135deg, #E3F2FD 0%, #BBDEFB 100%)",
+      "linear-gradient(135deg, #FCE4EC 0%, #F8BBD0 100%)",
+      "linear-gradient(135deg, #F3E5F5 0%, #E1BEE7 100%)"
+    ];
+
+    let gameState = {
+      currentLevel: 1,
+      cards: [],
+      flippedCards: [],
+      matchedPairs: 0,
+      mistakes: 0,
+      timeLeft: 20,
+      timer: null,
+      isPlaying: false
+    };
+
+    function getLevelConfig(level) {
+      const pairCount = 2 + level;
+      let timeLimit = 30;
+      if (level >= 4 && level <= 6) timeLimit = 50;
+      else if (level >= 7) timeLimit = 70;
+      return { pairCount, timeLimit };
+    }
+
+    function shuffleArray(array) {
+      const shuffled = [...array];
+      for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+      }
+      return shuffled;
+    }
+
+    function initializeLevel(level) {
+      const { pairCount, timeLimit } = getLevelConfig(level);
+      const selectedAnimals = animals.slice(0, pairCount);
+      const cardPairs = [...selectedAnimals, ...selectedAnimals].map((animal, index) => ({
+        ...animal,
+        id: index,
+        isFlipped: false,
+        isMatched: false
+      }));
+      
+      gameState.cards = shuffleArray(cardPairs);
+      gameState.flippedCards = [];
+      gameState.matchedPairs = 0;
+      gameState.mistakes = 0;
+      gameState.timeLeft = timeLimit;
+      gameState.isPlaying = true;
+      
+      startTimer();
+    }
+
+    function startTimer() {
+      if (gameState.timer) clearInterval(gameState.timer);
+      
+      gameState.timer = setInterval(() => {
+        gameState.timeLeft--;
+        updateTimerDisplay();
+        
+        if (gameState.timeLeft <= 0) {
+          clearInterval(gameState.timer);
+          showTimeUpModal();
+          playGameOver(); // ðŸ”Š suara kalah
+         gameState.isPlaying = false;
+        }
+      }, 1000);
+    }
+
+    function updateTimerDisplay() {
+      const timerEl = document.getElementById('timer');
+      if (timerEl) {
+        timerEl.textContent = `â±ï¸ ${gameState.timeLeft}`;
+        if (gameState.timeLeft <= 5) {
+          timerEl.style.color = '#FF5252';
+          timerEl.classList.add('pulse-animation');
+        }
+      }
+    }
+
+    function flipCard(cardIndex) {
+      if (!gameState.isPlaying || gameState.flippedCards.length >= 2) return;
+      
+      const card = gameState.cards[cardIndex];
+      if (card.isFlipped || card.isMatched) return;
+      
+      card.isFlipped = true;
+      gameState.flippedCards.push(cardIndex);
+      
+      const cardEl = document.getElementById(`card-${cardIndex}`);
+      cardEl.classList.add('card-flip');
+      cardEl.innerHTML = card.svg;
+      
+      if (gameState.flippedCards.length === 2) {
+        setTimeout(checkMatch, 800);
+      }
+    }
+   
+    function checkMatch() {
+      const [first, second] = gameState.flippedCards;
+      const card1 = gameState.cards[first];
+      const card2 = gameState.cards[second];
+      
+      if (card1.name === card2.name) {
+        card1.isMatched = true;
+        card2.isMatched = true;
+        gameState.matchedPairs++;
+        
+        document.getElementById(`card-${first}`).classList.add('bounce-animation');
+        document.getElementById(`card-${second}`).classList.add('bounce-animation');
+        
+        if (gameState.matchedPairs === gameState.cards.length / 2) {
+          clearInterval(gameState.timer);
+          setTimeout(() => showLevelComplete(), 800);
+        }
+      } else {
+        gameState.mistakes++;
+        setTimeout(() => {
+          card1.isFlipped = false;
+          card2.isFlipped = false;
+          renderCards();
+        }, 500);
+      }
+      
+      gameState.flippedCards = [];
+    }
+
+    function getStarRating() {
+      if (gameState.mistakes === 0) return 3;
+      if (gameState.mistakes <= 2) return 2;
+      return 1;
+    }
+
+    function getEncouragementMessage(stars) {
+      const messages = {
+        3: "Excellent! ðŸŒŸ",
+        2: "Great! ðŸ‘",
+        1: "Good! ðŸ’ª"
+      };
+      return messages[stars] || "Good!";
+    }
+
+    function playOpening() {
+      const audio = document.getElementById("soundOpening");
+      if (audio) {
+          audio.currentTime = 0;
+          audio.play();
+    }
+   }
+
+    function playReward() {
+      const audio = document.getElementById("soundReward");
+      if (audio) {
+      audio.currentTime = 0;
+      audio.play();
+    }
+   }
+
+    function playGameOver() {
+     const audio = document.getElementById("soundGameOver");
+      if (audio) {
+      audio.currentTime = 0;
+      audio.play();
+     }
+    }
+   
+    function showLevelComplete() {
+      playReward(); // ðŸ”Š suara menang
+     
+      const stars = getStarRating();
+      const message = getEncouragementMessage(stars);
+      
+      const modal = document.createElement('div');
+      modal.className = 'fixed inset-0 flex items-center justify-center z-50 fade-in';
+      modal.style.backgroundColor = 'rgba(0,0,0,0.5)';
+      
+      let starDisplay = '';
+      for (let i = 1; i <= 3; i++) {
+        starDisplay += `<span class="star-pop inline-block text-6xl" style="animation-delay: ${i * 0.15}s;">â­</span>`;
+      }
+      
+      modal.innerHTML = `
+        <div class="rounded-3xl p-8 text-center max-w-md mx-4 shadow-2xl" style="background: ${config.background_color};">
+          <div class="mb-4">${starDisplay}</div>
+          <h2 class="text-3xl font-bold mb-4" style="color: ${config.text_color}; font-family: ${config.font_family}, ${defaultConfig.font_family}, sans-serif; font-size: ${config.font_size * 2}px;">${message}</h2>
+          <p class="mb-6" style="color: ${config.text_color}; font-family: ${config.font_family}, ${defaultConfig.font_family}, sans-serif; font-size: ${config.font_size * 1.2}px;">Level ${gameState.currentLevel} Selesai!</p>
+          ${gameState.currentLevel < 10 ? `
+            <button id="nextLevelBtn" class="px-8 py-4 rounded-full text-white font-bold text-xl transition-transform hover:scale-105 shadow-lg" style="background: ${config.primary_button_color}; font-family: ${config.font_family}, ${defaultConfig.font_family}, sans-serif;">
+              Level Selanjutnya â†’
+            </button>
+          ` : `
+            <p class="text-2xl font-bold mb-4" style="color: ${config.primary_button_color}; font-family: ${config.font_family}, ${defaultConfig.font_family}, sans-serif;">ðŸŽ‰ Selamat! Semua Level Selesai! ðŸŽ‰</p>
+            <button id="restartBtn" class="px-8 py-4 rounded-full text-white font-bold text-xl transition-transform hover:scale-105 shadow-lg" style="background: ${config.primary_button_color}; font-family: ${config.font_family}, ${defaultConfig.font_family}, sans-serif;">
+              Main Lagi
+            </button>
+          `}
+        </div>
+      `;
+      
+      document.body.appendChild(modal);
+      
+      const nextBtn = document.getElementById('nextLevelBtn');
+      const restartBtn = document.getElementById('restartBtn');
+      
+      if (nextBtn) {
+        nextBtn.addEventListener('click', () => {
+          document.body.removeChild(modal);
+          gameState.currentLevel++;
+          setTimeout(renderGame, 100);
+        });
+      }
+      
+      if (restartBtn) {
+        restartBtn.addEventListener('click', () => {
+          document.body.removeChild(modal);
+          gameState.currentLevel = 1;
+          setTimeout(renderGame, 100);
+        });
+      }
+    }
+
+    function showTimeUpModal() {
+      gameState.isPlaying = false;
+      
+      const modal = document.createElement('div');
+      modal.className = 'fixed inset-0 flex items-center justify-center z-50 fade-in';
+      modal.style.backgroundColor = 'rgba(0,0,0,0.5)';
+      
+      modal.innerHTML = `
+        <div class="rounded-3xl p-8 text-center max-w-md mx-4 shadow-2xl" style="background: ${config.background_color};">
+          <div class="text-6xl mb-4">â°</div>
+          <h2 class="text-3xl font-bold mb-4" style="color: ${config.text_color}; font-family: ${config.font_family}, ${defaultConfig.font_family}, sans-serif; font-size: ${config.font_size * 2}px;">Ayo Ulang!</h2>
+          <p class="mb-6" style="color: ${config.text_color}; font-family: ${config.font_family}, ${defaultConfig.font_family}, sans-serif; font-size: ${config.font_size * 1.2}px;">Waktunya habis. Coba lagi yuk! ðŸ’ª</p>
+          <button id="retryBtn" class="px-8 py-4 rounded-full text-white font-bold text-xl transition-transform hover:scale-105 shadow-lg" style="background: ${config.primary_button_color}; font-family: ${config.font_family}, ${defaultConfig.font_family}, sans-serif;">
+            Coba Lagi
+          </button>
+        </div>
+      `;
+      
+      document.body.appendChild(modal);
+      
+      document.getElementById('retryBtn').addEventListener('click', () => {
+        document.body.removeChild(modal);
+        setTimeout(renderGame, 100);
+      });
+    }
+
+    function renderCards() {
+      const grid = document.getElementById('cardGrid');
+      if (!grid) return;
+      
+      grid.innerHTML = '';
+      const gridCols = gameState.cards.length <= 8 ? 4 : 5;
+      grid.className = `grid gap-3 justify-center`;
+      grid.style.gridTemplateColumns = `repeat(${gridCols}, minmax(0, 80px))`;
+      
+      gameState.cards.forEach((card, index) => {
+        const cardEl = document.createElement('div');
+        cardEl.id = `card-${index}`;
+        cardEl.className = 'card-3d aspect-square rounded-xl cursor-pointer transition-all hover:scale-105 flex items-center justify-center shadow-lg';
+        cardEl.style.background = card.isFlipped || card.isMatched ? config.background_color : config.card_back_color;
+        
+        if (card.isFlipped || card.isMatched) {
+          cardEl.innerHTML = card.svg;
+        } else {
+          cardEl.innerHTML = `<div style="font-size: ${config.font_size * 2}px;">â“</div>`;
+          cardEl.addEventListener('click', () => flipCard(index));
+        }
+        
+        grid.appendChild(cardEl);
+      });
+    }
+
+    function renderGame() {
+      playOpening(); // ðŸ”Š suara mulai
+      initializeLevel(gameState.currentLevel);
+      
+      const bgIndex = (gameState.currentLevel - 1) % backgrounds.length;
+      const levelGuides = [
+        { color: config.accent_color, name: "Puzzing", message: "Ayo cocokkan kartu-kartunya! ðŸŽ¯" },
+        { color: config.primary_button_color, name: "Puzzing", message: "Ayo cocokkan kartu-kartunya! ðŸŽ¯" },
+        { color: "#9C27B0", name: "Puzzing", message: "Ayo cocokkan kartu-kartunya! ðŸŽ¯" },
+        { color: "#FF9800", name: "Puzzing", message: "Ayo cocokkan kartu-kartunya! ðŸŽ¯" },
+        { color: "#4CAF50", name: "Puzzing", message: "Ayo cocokkan kartu-kartunya! ðŸŽ¯" },
+        { color: "#E91E63", name: "Puzzing", message: "Ayo cocokkan kartu-kartunya! ðŸŽ¯" },
+        { color: "#00BCD4", name: "Puzzing", message: "Ayo cocokkan kartu-kartunya! ðŸŽ¯" },
+        { color: "#FF5722", name: "Puzzing", message: "Ayo cocokkan kartu-kartunya! ðŸŽ¯" },
+        { color: "#673AB7", name: "Puzzing", message: "Ayo cocokkan kartu-kartunya! ðŸŽ¯" },
+        { color: "#FFC107", name: "Puzzing", message: "Ayo cocokkan kartu-kartunya! ðŸŽ¯" }
+      ];
+      
+      const currentGuide = levelGuides[gameState.currentLevel - 1];
+      
+      const app = document.getElementById('app');
+      app.style.background = backgrounds[bgIndex];
+      
+      app.innerHTML = `
+        <div class="min-h-full flex flex-col items-center justify-center p-6">
+          <div class="text-center mb-6">
+            <h1 class="text-4xl font-bold mb-2" style="color: ${config.text_color}; font-family: ${config.font_family}, ${defaultConfig.font_family}, sans-serif; font-size: ${config.font_size * 2.5}px;">${config.game_title}</h1>
+            <div class="text-2xl font-bold" style="color: ${config.primary_button_color}; font-family: ${config.font_family}, ${defaultConfig.font_family}, sans-serif; font-size: ${config.font_size * 1.5}px;">Level ${gameState.currentLevel}</div>
+          </div>
+          
+          <div class="mb-6 p-4 rounded-2xl shadow-lg max-w-md text-center" style="background: white;">
+            <div class="bounce-animation" style="display: inline-block;">
+              <svg width="80" height="100" viewBox="0 0 80 100" style="display: block;">
+                <!-- Badan Puzzle -->
+                <rect x="15" y="25" width="25" height="25" rx="4" fill="${currentGuide.color}" stroke="white" stroke-width="2"/>
+                <rect x="40" y="25" width="25" height="25" rx="4" fill="${currentGuide.color}" stroke="white" stroke-width="2" opacity="0.8"/>
+                <rect x="15" y="50" width="25" height="25" rx="4" fill="${currentGuide.color}" stroke="white" stroke-width="2" opacity="0.8"/>
+                <rect x="40" y="50" width="25" height="25" rx="4" fill="${currentGuide.color}" stroke="white" stroke-width="2"/>
+                
+                <!-- Mata -->
+                <circle cx="27" cy="40" r="3" fill="white"/>
+                <circle cx="28" cy="40" r="1.5" fill="#333"/>
+                <circle cx="53" cy="40" r="3" fill="white"/>
+                <circle cx="54" cy="40" r="1.5" fill="#333"/>
+                
+                <!-- Mulut Senyum -->
+                <path d="M 27 58 Q 40 65 53 58" stroke="white" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+                
+                <!-- Tangan Kiri -->
+                <rect x="5" y="35" width="8" height="20" rx="4" fill="${currentGuide.color}" opacity="0.9"/>
+                <circle cx="9" cy="57" r="4" fill="${currentGuide.color}"/>
+                
+                <!-- Tangan Kanan -->
+                <rect x="67" y="35" width="8" height="20" rx="4" fill="${currentGuide.color}" opacity="0.9"/>
+                <circle cx="71" cy="57" r="4" fill="${currentGuide.color}"/>
+                
+                <!-- Kaki Kiri -->
+                <rect x="22" y="77" width="10" height="15" rx="3" fill="${currentGuide.color}" opacity="0.9"/>
+                <ellipse cx="27" cy="93" rx="6" ry="3" fill="${currentGuide.color}"/>
+                
+                <!-- Kaki Kanan -->
+                <rect x="48" y="77" width="10" height="15" rx="3" fill="${currentGuide.color}" opacity="0.9"/>
+                <ellipse cx="53" cy="93" rx="6" ry="3" fill="${currentGuide.color}"/>
+              </svg>
+            </div>
+            <div class="font-bold text-lg mb-1 mt-2" style="color: ${config.text_color}; font-family: ${config.font_family}, ${defaultConfig.font_family}, sans-serif; font-size: ${config.font_size * 1.2}px;">${currentGuide.name}</div>
+            <p style="color: ${config.text_color}; font-family: ${config.font_family}, ${defaultConfig.font_family}, sans-serif; font-size: ${config.font_size}px;">${currentGuide.message}</p>
+          </div>
+          
+          <div id="timer" class="text-3xl font-bold mb-4" style="color: ${config.text_color}; font-family: ${config.font_family}, ${defaultConfig.font_family}, sans-serif; font-size: ${config.font_size * 1.8}px;">â±ï¸ ${gameState.timeLeft}</div>
+          
+          <div id="cardGrid" class="mb-6"></div>
+        </div>
+      `;
+      
+      renderCards();
+    }
+
+    function renderStartScreen() {
+      const app = document.getElementById('app');
+      app.style.background = backgrounds[0];
+      
+      app.innerHTML = `
+        <div class="min-h-full flex flex-col items-center justify-center p-6 relative">
+          <!-- Hewan Background - Anjing (Kiri Atas) -->
+          <div class="absolute top-8 left-8 float-animation opacity-40" style="animation-delay: 0s;">
+            <svg width="110" height="110" viewBox="0 0 100 100">
+              <!-- Tubuh -->
+              <ellipse cx="50" cy="60" rx="22" ry="18" fill="#FFB74D"/>
+              
+              <!-- Kepala -->
+              <circle cx="50" cy="35" r="18" fill="#FFB74D"/>
+              
+              <!-- Telinga Kiri -->
+              <ellipse cx="37" cy="22" rx="8" ry="15" fill="#FF9800" transform="rotate(-20 37 22)"/>
+              
+              <!-- Telinga Kanan -->
+              <ellipse cx="63" cy="22" rx="8" ry="15" fill="#FF9800" transform="rotate(20 63 22)"/>
+              
+              <!-- Mata Kiri -->
+              <circle cx="43" cy="32" r="3" fill="#333"/>
+              
+              <!-- Mata Kanan -->
+              <circle cx="57" cy="32" r="3" fill="#333"/>
+              
+              <!-- Hidung -->
+              <circle cx="50" cy="40" r="3" fill="#333"/>
+              
+              <!-- Mulut -->
+              <path d="M 50 42 Q 45 46 42 44 M 50 42 Q 55 46 58 44" stroke="#333" stroke-width="2" fill="none" stroke-linecap="round"/>
+              
+              <!-- Kaki Depan Kiri -->
+              <rect x="38" y="72" width="7" height="18" rx="3" fill="#FFB74D"/>
+              <ellipse cx="41.5" cy="90" rx="4" ry="2.5" fill="#FF9800"/>
+              
+              <!-- Kaki Depan Kanan -->
+              <rect x="55" y="72" width="7" height="18" rx="3" fill="#FFB74D"/>
+              <ellipse cx="58.5" cy="90" rx="4" ry="2.5" fill="#FF9800"/>
+              
+              <!-- Kaki Belakang Kiri -->
+              <rect x="33" y="72" width="7" height="16" rx="3" fill="#FFB74D"/>
+              <ellipse cx="36.5" cy="88" rx="4" ry="2.5" fill="#FF9800"/>
+              
+              <!-- Kaki Belakang Kanan -->
+              <rect x="60" y="72" width="7" height="16" rx="3" fill="#FFB74D"/>
+              <ellipse cx="63.5" cy="88" rx="4" ry="2.5" fill="#FF9800"/>
+              
+              <!-- Ekor -->
+              <path d="M 70 55 Q 80 50 85 60" stroke="#FFB74D" stroke-width="6" fill="none" stroke-linecap="round"/>
+            </svg>
+          </div>
+          
+          <!-- Hewan Background - Kucing (Kanan Atas) -->
+          <div class="absolute top-6 right-12 float-animation opacity-40" style="animation-delay: 1s;">
+            <svg width="105" height="105" viewBox="0 0 100 100">
+              <!-- Tubuh -->
+              <ellipse cx="50" cy="62" rx="20" ry="16" fill="#EF5350"/>
+              
+              <!-- Kepala -->
+              <circle cx="50" cy="38" r="16" fill="#EF5350"/>
+              
+              <!-- Telinga Kiri (Segitiga) -->
+              <polygon points="37,20 32,32 42,32" fill="#EF5350"/>
+              <polygon points="37,24 34,30 40,30" fill="#FFB3B3"/>
+              
+              <!-- Telinga Kanan (Segitiga) -->
+              <polygon points="63,20 58,32 68,32" fill="#EF5350"/>
+              <polygon points="63,24 60,30 66,30" fill="#FFB3B3"/>
+              
+              <!-- Mata Kiri -->
+              <ellipse cx="43" cy="36" rx="3" ry="4" fill="#FFF"/>
+              <ellipse cx="43" cy="37" rx="1.5" ry="3" fill="#333"/>
+              
+              <!-- Mata Kanan -->
+              <ellipse cx="57" cy="36" rx="3" ry="4" fill="#FFF"/>
+              <ellipse cx="57" cy="37" rx="1.5" ry="3" fill="#333"/>
+              
+              <!-- Hidung -->
+              <polygon points="50,42 48,45 52,45" fill="#333"/>
+              
+              <!-- Mulut -->
+              <path d="M 50 45 L 50 48 M 50 48 Q 46 50 43 48 M 50 48 Q 54 50 57 48" stroke="#333" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+              
+              <!-- Kumis Kiri -->
+              <line x1="35" y1="40" x2="25" y2="38" stroke="#333" stroke-width="1"/>
+              <line x1="35" y1="43" x2="25" y2="43" stroke="#333" stroke-width="1"/>
+              
+              <!-- Kumis Kanan -->
+              <line x1="65" y1="40" x2="75" y2="38" stroke="#333" stroke-width="1"/>
+              <line x1="65" y1="43" x2="75" y2="43" stroke="#333" stroke-width="1"/>
+              
+              <!-- Kaki Depan Kiri -->
+              <rect x="40" y="72" width="6" height="16" rx="3" fill="#EF5350"/>
+              <ellipse cx="43" cy="88" rx="3.5" ry="2" fill="#C62828"/>
+              
+              <!-- Kaki Depan Kanan -->
+              <rect x="54" y="72" width="6" height="16" rx="3" fill="#EF5350"/>
+              <ellipse cx="57" cy="88" rx="3.5" ry="2" fill="#C62828"/>
+              
+              <!-- Kaki Belakang Kiri -->
+              <rect x="36" y="72" width="6" height="14" rx="3" fill="#EF5350"/>
+              <ellipse cx="39" cy="86" rx="3.5" ry="2" fill="#C62828"/>
+              
+              <!-- Kaki Belakang Kanan -->
+              <rect x="58" y="72" width="6" height="14" rx="3" fill="#EF5350"/>
+              <ellipse cx="61" cy="86" rx="3.5" ry="2" fill="#C62828"/>
+              
+              <!-- Ekor -->
+              <path d="M 68 58 Q 78 52 80 42" stroke="#EF5350" stroke-width="5" fill="none" stroke-linecap="round"/>
+            </svg>
+          </div>
+          
+          <!-- Hewan Background - Beruang (Kiri Bawah) -->
+          <div class="absolute bottom-20 left-12 float-animation opacity-40" style="animation-delay: 2s;">
+            <svg width="115" height="115" viewBox="0 0 100 100">
+              <!-- Tubuh -->
+              <ellipse cx="50" cy="65" rx="24" ry="20" fill="#8D6E63"/>
+              
+              <!-- Perut -->
+              <ellipse cx="50" cy="68" rx="16" ry="14" fill="#BCAAA4"/>
+              
+              <!-- Kepala -->
+              <circle cx="50" cy="35" r="18" fill="#8D6E63"/>
+              
+              <!-- Moncong -->
+              <ellipse cx="50" cy="42" rx="11" ry="9" fill="#BCAAA4"/>
+              
+              <!-- Telinga Kiri -->
+              <circle cx="35" cy="22" r="8" fill="#8D6E63"/>
+              <circle cx="35" cy="23" r="5" fill="#6D4C41"/>
+              
+              <!-- Telinga Kanan -->
+              <circle cx="65" cy="22" r="8" fill="#8D6E63"/>
+              <circle cx="65" cy="23" r="5" fill="#6D4C41"/>
+              
+              <!-- Mata Kiri -->
+              <circle cx="43" cy="32" r="3" fill="#333"/>
+              
+              <!-- Mata Kanan -->
+              <circle cx="57" cy="32" r="3" fill="#333"/>
+              
+              <!-- Hidung -->
+              <ellipse cx="50" cy="43" rx="4" ry="3" fill="#333"/>
+              
+              <!-- Mulut -->
+              <path d="M 50 45 Q 45 48 42 46 M 50 45 Q 55 48 58 46" stroke="#333" stroke-width="2" fill="none" stroke-linecap="round"/>
+              
+              <!-- Kaki Depan Kiri -->
+              <rect x="35" y="80" width="8" height="14" rx="4" fill="#8D6E63"/>
+              <ellipse cx="39" cy="94" rx="5" ry="3" fill="#6D4C41"/>
+              
+              <!-- Kaki Depan Kanan -->
+              <rect x="57" y="80" width="8" height="14" rx="4" fill="#8D6E63"/>
+              <ellipse cx="61" cy="94" rx="5" ry="3" fill="#6D4C41"/>
+              
+              <!-- Kaki Belakang Kiri -->
+              <rect x="30" y="80" width="8" height="12" rx="4" fill="#8D6E63"/>
+              <ellipse cx="34" cy="92" rx="5" ry="3" fill="#6D4C41"/>
+              
+              <!-- Kaki Belakang Kanan -->
+              <rect x="62" y="80" width="8" height="12" rx="4" fill="#8D6E63"/>
+              <ellipse cx="66" cy="92" rx="5" ry="3" fill="#6D4C41"/>
+            </svg>
+          </div>
+          
+          <!-- Hewan Background - Kelinci (Kanan Bawah) -->
+          <div class="absolute bottom-14 right-16 float-animation opacity-40" style="animation-delay: 1.5s;">
+            <svg width="108" height="108" viewBox="0 0 100 100">
+              <!-- Tubuh -->
+              <ellipse cx="50" cy="68" rx="18" ry="16" fill="#CE93D8"/>
+              
+              <!-- Kepala -->
+              <circle cx="50" cy="42" r="15" fill="#CE93D8"/>
+              
+              <!-- Telinga Kiri (Panjang) -->
+              <ellipse cx="42" cy="18" rx="5" ry="18" fill="#CE93D8" transform="rotate(-10 42 18)"/>
+              <ellipse cx="42" cy="18" rx="3" ry="14" fill="#F3E5F5" transform="rotate(-10 42 18)"/>
+              
+              <!-- Telinga Kanan (Panjang) -->
+              <ellipse cx="58" cy="18" rx="5" ry="18" fill="#CE93D8" transform="rotate(10 58 18)"/>
+              <ellipse cx="58" cy="18" rx="3" ry="14" fill="#F3E5F5" transform="rotate(10 58 18)"/>
+              
+              <!-- Mata Kiri -->
+              <circle cx="45" cy="40" r="3" fill="#333"/>
+              
+              <!-- Mata Kanan -->
+              <circle cx="55" cy="40" r="3" fill="#333"/>
+              
+              <!-- Hidung -->
+              <ellipse cx="50" cy="47" rx="2.5" ry="2" fill="#E91E63"/>
+              
+              <!-- Mulut -->
+              <path d="M 50 48 L 50 51 M 48 51 Q 50 53 52 51" stroke="#333" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+              
+              <!-- Pipi -->
+              <circle cx="40" cy="44" r="4" fill="#F8BBD0" opacity="0.6"/>
+              <circle cx="60" cy="44" r="4" fill="#F8BBD0" opacity="0.6"/>
+              
+              <!-- Kaki Depan Kiri -->
+              <rect x="42" y="78" width="6" height="12" rx="3" fill="#CE93D8"/>
+              <ellipse cx="45" cy="90" rx="3.5" ry="2" fill="#BA68C8"/>
+              
+              <!-- Kaki Depan Kanan -->
+              <rect x="52" y="78" width="6" height="12" rx="3" fill="#CE93D8"/>
+              <ellipse cx="55" cy="90" rx="3.5" ry="2" fill="#BA68C8"/>
+              
+              <!-- Kaki Belakang (Besar) Kiri -->
+              <ellipse cx="38" cy="85" rx="6" ry="8" fill="#CE93D8"/>
+              <ellipse cx="38" cy="88" rx="5" ry="4" fill="#BA68C8"/>
+              
+              <!-- Kaki Belakang (Besar) Kanan -->
+              <ellipse cx="62" cy="85" rx="6" ry="8" fill="#CE93D8"/>
+              <ellipse cx="62" cy="88" rx="5" ry="4" fill="#BA68C8"/>
+              
+              <!-- Ekor (Bulat) -->
+              <circle cx="50" cy="82" r="6" fill="#F3E5F5"/>
+            </svg>
+          </div>
+          
+          <div class="text-center z-10 fade-in">
+            <div class="relative inline-block mb-8">
+              <div class="absolute inset-0 blur-xl opacity-50" style="background: ${config.primary_button_color};"></div>
+              <h1 class="relative text-6xl font-bold pulse-animation" style="color: ${config.primary_button_color}; font-family: ${config.font_family}, ${defaultConfig.font_family}, sans-serif; text-shadow: 4px 4px 0px rgba(255,255,255,0.8), -2px -2px 10px rgba(255,255,255,0.5); font-size: ${config.font_size * 3.5}px;">
+                ${config.game_title}
+              </h1>
+            </div>
+            
+            <div class="mb-8">
+              <div class="relative inline-block">
+                <!-- Efek Shadow Glow -->
+                <div class="absolute inset-0 blur-2xl opacity-30" style="background: radial-gradient(circle, ${config.accent_color}, transparent);"></div>
+                
+                <div class="bounce-animation relative" style="display: inline-block;">
+                  <svg width="160" height="180" viewBox="0 0 140 160" style="display: block; filter: drop-shadow(0px 8px 20px rgba(0,0,0,0.25));">
+                    <!-- Glow Background -->
+                    <circle cx="70" cy="80" r="60" fill="${config.accent_color}" opacity="0.1"/>
+                    
+                    <!-- Badan Puzzle dengan Gradient Effect -->
+                    <defs>
+                      <linearGradient id="puzzleGrad1" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" style="stop-color:${config.accent_color};stop-opacity:1" />
+                        <stop offset="100%" style="stop-color:${config.accent_color};stop-opacity:0.7" />
+                      </linearGradient>
+                      <linearGradient id="puzzleGrad2" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" style="stop-color:${config.primary_button_color};stop-opacity:1" />
+                        <stop offset="100%" style="stop-color:${config.primary_button_color};stop-opacity:0.7" />
+                      </linearGradient>
+                      <linearGradient id="puzzleGrad3" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" style="stop-color:${config.card_back_color};stop-opacity:1" />
+                        <stop offset="100%" style="stop-color:${config.card_back_color};stop-opacity:0.7" />
+                      </linearGradient>
+                    </defs>
+                    
+                    <!-- Badan Puzzle -->
+                    <rect x="30" y="40" width="40" height="40" rx="8" fill="url(#puzzleGrad1)" stroke="white" stroke-width="3"/>
+                    <rect x="70" y="40" width="40" height="40" rx="8" fill="url(#puzzleGrad2)" stroke="white" stroke-width="3"/>
+                    <rect x="30" y="80" width="40" height="40" rx="8" fill="url(#puzzleGrad3)" stroke="white" stroke-width="3"/>
+                    <rect x="70" y="80" width="40" height="40" rx="8" fill="url(#puzzleGrad1)" stroke="white" stroke-width="3"/>
+                    
+
+                    
+                    <!-- Mata dengan cahaya -->
+                    <circle cx="48" cy="65" r="6" fill="white"/>
+                    <circle cx="49" cy="65" r="3" fill="#333"/>
+                    <circle cx="50" cy="64" r="1.5" fill="white"/>
+                    
+                    <circle cx="92" cy="65" r="6" fill="white"/>
+                    <circle cx="93" cy="65" r="3" fill="#333"/>
+                    <circle cx="94" cy="64" r="1.5" fill="white"/>
+                    
+                    <!-- Mulut Senyum yang lebih besar -->
+                    <path d="M 48 95 Q 70 110 92 95" stroke="white" stroke-width="5" fill="none" stroke-linecap="round"/>
+                    <path d="M 48 95 Q 70 107 92 95" stroke="#333" stroke-width="3" fill="none" stroke-linecap="round"/>
+                    
+                    <!-- Pipi merah -->
+                    <ellipse cx="38" cy="75" rx="8" ry="6" fill="#FF6B9D" opacity="0.4"/>
+                    <ellipse cx="102" cy="75" rx="8" ry="6" fill="#FF6B9D" opacity="0.4"/>
+                    
+                    <!-- Tangan Kiri dengan shadow -->
+                    <rect x="10" y="55" width="14" height="30" rx="7" fill="url(#puzzleGrad1)" opacity="0.95"/>
+                    <circle cx="17" cy="88" r="8" fill="url(#puzzleGrad1)"/>
+                    
+                    <!-- Tangan Kanan -->
+                    <rect x="116" y="55" width="14" height="30" rx="7" fill="url(#puzzleGrad2)" opacity="0.95"/>
+                    <circle cx="123" cy="88" r="8" fill="url(#puzzleGrad2)"/>
+                    
+                    <!-- Kaki Kiri -->
+                    <rect x="42" y="122" width="16" height="24" rx="5" fill="url(#puzzleGrad3)" opacity="0.95"/>
+                    <ellipse cx="50" cy="148" rx="11" ry="5" fill="url(#puzzleGrad3)"/>
+                    
+                    <!-- Kaki Kanan -->
+                    <rect x="82" y="122" width="16" height="24" rx="5" fill="url(#puzzleGrad1)" opacity="0.95"/>
+                    <ellipse cx="90" cy="148" rx="11" ry="5" fill="url(#puzzleGrad1)"/>
+                    
+
+                  </svg>
+                </div>
+              </div>
+              <div class="relative">
+                <p class="text-2xl font-bold mt-4" style="color: ${config.text_color}; font-family: ${config.font_family}, ${defaultConfig.font_family}, sans-serif; font-size: ${config.font_size * 1.5}px; text-shadow: 2px 2px 4px rgba(255,255,255,0.7);">Hai! Aku ${config.guide_name}! ðŸ‘‹</p>
+                <p class="mt-2" style="color: ${config.text_color}; font-family: ${config.font_family}, ${defaultConfig.font_family}, sans-serif; font-size: ${config.font_size * 1.2}px;">Ayo cocokkan kartu binatang!</p>
+              </div>
+            </div>
+            
+            <div class="flex gap-3 justify-center items-center">
+              <div class="relative">
+                <div class="absolute inset-0 blur-xl opacity-60 pulse-animation" style="background: ${config.primary_button_color};"></div>
+                <button id="startBtn" class="relative px-10 py-5 rounded-full text-white font-bold text-xl transition-all hover:scale-110 hover:shadow-2xl shadow-xl" style="background: linear-gradient(135deg, ${config.primary_button_color} 0%, ${config.accent_color} 100%); font-family: ${config.font_family}, ${defaultConfig.font_family}, sans-serif; font-size: ${config.font_size * 1.4}px; border: 3px solid white;">
+                  <span class="relative z-10">${config.start_button} ðŸŽ®</span>
+                  <div class="absolute inset-0 rounded-full opacity-0 hover:opacity-20 transition-opacity" style="background: white;"></div>
+                </button>
+              </div>
+              
+              <div class="relative">
+                <div class="absolute inset-0 blur-xl opacity-50" style="background: ${config.accent_color};"></div>
+                <button id="instructionBtn" class="relative px-10 py-5 rounded-full text-white font-bold text-xl transition-all hover:scale-110 hover:shadow-2xl shadow-xl" style="background: ${config.accent_color}; font-family: ${config.font_family}, ${defaultConfig.font_family}, sans-serif; font-size: ${config.font_size * 1.4}px; border: 3px solid white;">
+                  <span class="relative z-10">Petunjuk ðŸ“–</span>
+                  <div class="absolute inset-0 rounded-full opacity-0 hover:opacity-20 transition-opacity" style="background: white;"></div>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+      
+      document.getElementById('startBtn').addEventListener('click', () => {
+        setTimeout(renderGame, 200);
+      });
+      document.getElementById('instructionBtn').addEventListener('click', () => {
+        showInstructions();
+      });
+    }
+
+    function showInstructions() {
+      const app = document.getElementById('app');
+      app.style.background = backgrounds[0];
+      
+      app.innerHTML = `
+        <div class="min-h-full flex flex-col items-center justify-center p-6">
+          <div class="max-w-2xl w-full bg-white rounded-3xl shadow-2xl p-8 fade-in">
+            <div class="text-center mb-6">
+              <div class="text-6xl mb-4 bounce-animation">ðŸ“š</div>
+              <h2 class="text-4xl font-bold" style="color: ${config.primary_button_color}; font-family: ${config.font_family}, ${defaultConfig.font_family}, sans-serif; font-size: ${config.font_size * 2.5}px;">Cara Bermain</h2>
+            </div>
+            
+            <div class="space-y-6 mb-8">
+              <div class="flex items-start gap-4 p-4 rounded-2xl" style="background: ${config.background_color};">
+                <div class="text-5xl flex-shrink-0">1ï¸âƒ£</div>
+                <div>
+                  <h3 class="font-bold text-2xl mb-2" style="color: ${config.text_color}; font-family: ${config.font_family}, ${defaultConfig.font_family}, sans-serif; font-size: ${config.font_size * 1.5}px;">Klik Kartu</h3>
+                  <p style="color: ${config.text_color}; font-family: ${config.font_family}, ${defaultConfig.font_family}, sans-serif; font-size: ${config.font_size * 1.1}px;">Klik kartu yang ada tanda â“ untuk melihat binatang di dalamnya</p>
+                </div>
+              </div>
+              
+              <div class="flex items-start gap-4 p-4 rounded-2xl" style="background: ${config.background_color};">
+                <div class="text-5xl flex-shrink-0">2ï¸âƒ£</div>
+                <div>
+                  <h3 class="font-bold text-2xl mb-2" style="color: ${config.text_color}; font-family: ${config.font_family}, ${defaultConfig.font_family}, sans-serif; font-size: ${config.font_size * 1.5}px;">Cari Pasangan</h3>
+                  <p style="color: ${config.text_color}; font-family: ${config.font_family}, ${defaultConfig.font_family}, sans-serif; font-size: ${config.font_size * 1.1}px;">Cari 2 kartu dengan binatang yang sama. Contoh: ðŸ¶ dengan ðŸ¶</p>
+                </div>
+              </div>
+              
+              <div class="flex items-start gap-4 p-4 rounded-2xl" style="background: ${config.background_color};">
+                <div class="text-5xl flex-shrink-0">3ï¸âƒ£</div>
+                <div>
+                  <h3 class="font-bold text-2xl mb-2" style="color: ${config.text_color}; font-family: ${config.font_family}, ${defaultConfig.font_family}, sans-serif; font-size: ${config.font_size * 1.5}px;">Ingat-Ingat!</h3>
+                  <p style="color: ${config.text_color}; font-family: ${config.font_family}, ${defaultConfig.font_family}, sans-serif; font-size: ${config.font_size * 1.1}px;">Ingat di mana letak binatangnya ya! Kamu harus cepat sebelum waktunya habis â±ï¸</p>
+                </div>
+              </div>
+              
+              <div class="flex items-start gap-4 p-4 rounded-2xl" style="background: ${config.background_color};">
+                <div class="text-5xl flex-shrink-0">4ï¸âƒ£</div>
+                <div>
+                  <h3 class="font-bold text-2xl mb-2" style="color: ${config.text_color}; font-family: ${config.font_family}, ${defaultConfig.font_family}, sans-serif; font-size: ${config.font_size * 1.5}px;">Dapat Bintang</h3>
+                  <p style="color: ${config.text_color}; font-family: ${config.font_family}, ${defaultConfig.font_family}, sans-serif; font-size: ${config.font_size * 1.1}px;">Cocokkan semua kartu untuk dapat bintang â­â­â­ dan naik level!</p>
+                </div>
+              </div>
+            </div>
+            
+            <div class="flex gap-4 justify-center flex-wrap">
+              <button id="backBtn" class="px-8 py-4 rounded-full text-white font-bold text-xl transition-all hover:scale-105 shadow-lg" style="background: ${config.accent_color}; font-family: ${config.font_family}, ${defaultConfig.font_family}, sans-serif; font-size: ${config.font_size * 1.2}px;">
+                â† Kembali
+              </button>
+              <button id="startFromInstructionBtn" class="px-8 py-4 rounded-full text-white font-bold text-xl transition-all hover:scale-105 shadow-lg" style="background: ${config.primary_button_color}; font-family: ${config.font_family}, ${defaultConfig.font_family}, sans-serif; font-size: ${config.font_size * 1.2}px;">
+                Mulai Bermain! ðŸŽ®
+              </button>
+            </div>
+          </div>
+        </div>
+      `;
+      
+      document.getElementById('backBtn').addEventListener('click', () => {
+       playOpening();   // ðŸ”Š TAMBAHAN
+       renderStartScreen();
+      });
+      document.getElementById('startFromInstructionBtn').addEventListener('click', () => {
+        setTimeout(renderGame, 200);
+      });
+    }
+
+    async function onConfigChange(newConfig) {
+      Object.assign(config, newConfig);
+      
+      const currentScreen = gameState.isPlaying ? 'game' : 'start';
+      if (currentScreen === 'start') {
+        renderStartScreen();
+      } else {
+        renderGame();
+      }
+    }
+
+    function mapToCapabilities(config) {
+      return {
+        recolorables: [
+          {
+            get: () => config.background_color || defaultConfig.background_color,
+            set: (value) => {
+              config.background_color = value;
+              if (window.elementSdk) window.elementSdk.setConfig({ background_color: value });
+            }
+          },
+          {
+            get: () => config.card_back_color || defaultConfig.card_back_color,
+            set: (value) => {
+              config.card_back_color = value;
+              if (window.elementSdk) window.elementSdk.setConfig({ card_back_color: value });
+            }
+          },
+          {
+            get: () => config.primary_button_color || defaultConfig.primary_button_color,
+            set: (value) => {
+              config.primary_button_color = value;
+              if (window.elementSdk) window.elementSdk.setConfig({ primary_button_color: value });
+            }
+          },
+          {
+            get: () => config.text_color || defaultConfig.text_color,
+            set: (value) => {
+              config.text_color = value;
+              if (window.elementSdk) window.elementSdk.setConfig({ text_color: value });
+            }
+          },
+          {
+            get: () => config.accent_color || defaultConfig.accent_color,
+            set: (value) => {
+              config.accent_color = value;
+              if (window.elementSdk) window.elementSdk.setConfig({ accent_color: value });
+            }
+          }
+        ],
+        borderables: [],
+        fontEditable: {
+          get: () => config.font_family || defaultConfig.font_family,
+          set: (value) => {
+            config.font_family = value;
+            if (window.elementSdk) window.elementSdk.setConfig({ font_family: value });
+          }
+        },
+        fontSizeable: {
+          get: () => config.font_size || defaultConfig.font_size,
+          set: (value) => {
+            config.font_size = value;
+            if (window.elementSdk) window.elementSdk.setConfig({ font_size: value });
+          }
+        }
+      };
+    }
+
+    function mapToEditPanelValues(config) {
+      return new Map([
+        ["game_title", config.game_title || defaultConfig.game_title],
+        ["guide_name", config.guide_name || defaultConfig.guide_name],
+        ["start_button", config.start_button || defaultConfig.start_button]
+      ]);
+    }
+
+    if (window.elementSdk) {
+      window.elementSdk.init({
+        defaultConfig,
+        onConfigChange,
+        mapToCapabilities,
+        mapToEditPanelValues
+      });
+    }
+
+    renderStartScreen();
+  </script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9ce17c32d09289be',t:'MTc3MTEyMzY5NC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+
+</html>
+
